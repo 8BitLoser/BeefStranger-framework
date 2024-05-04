@@ -11,7 +11,7 @@ function spellMaker.calculateEffectCost(spell)
             local maxMag = effect.max or 1
             local duration = effect.duration or 1
             local area = effect.area or 1
-            local baseEffectCost = effect.object.baseMagickaCost
+            local baseEffectCost = effect.cost
             local ranged = 1
 
             if effect.rangeType == tes3.effectRange.target then
@@ -26,7 +26,7 @@ function spellMaker.calculateEffectCost(spell)
     return totalCost
 end
 
---- @class SpellParams
+--[[ --- @class SpellParams
 --- @field id string The unique identifier for the spell.
 --- @field name string The name of the spell.
 --- @field castType tes3.spellType? 'ability' | 'blight' | 'curse' | 'disease' | 'power' | 'spell'? Optional. Defaults to spell
@@ -72,7 +72,7 @@ function spellMaker.createBasic(params) ---Might Remove and just use spellMaker.
     -- end
     spell.magickaCost = params.cost or spellMaker.calculateEffectCost(spell) --Auto Calculate spell cost if, you dont set one
     return spell
-end
+end ]]
 
 
 --- @class SpellParamsCreate

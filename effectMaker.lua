@@ -153,10 +153,12 @@ function effectMaker.create(params)
         allowEnchanting = params.allowEnchanting or false,
         allowSpellmaking = params.allowSpellmaking or false,
         appliesOnce = params.appliesOnce or false,
-        canCastSelf = params.canCastSelf or true,
-        canCastTarget = params.canCastTarget or true,
-        canCastTouch = params.canCastTouch or true,
-        casterLinked = params.casterLinked or true,
+
+        canCastSelf = (params.canCastSelf == nil) and true or params.canCastSelf,
+        canCastTarget = (params.canCastTouch == nil) and true or params.canCastTouch, --REVERSED! Odd problem with addMagicEffect
+        canCastTouch = (params.canCastTarget == nil) and true or params.canCastTarget, --REVERSED! Touch/Target Reversed
+
+        casterLinked = (params.casterLinked == nil) and true or params.casterLinked,
         hasNoDuration = params.hasNoDuration or false,
         hasNoMagnitude = params.hasNoMagnitude or false,
         illegalDaedra = params.illegalDaedra or false,
@@ -171,6 +173,7 @@ function effectMaker.create(params)
     })
     return effect
 end
+
 ---STOLE THESE FROM OPERATORJACK: for testing need to make my own
 effectMaker.getActorsNearTargetPosition = function(cell, targetPosition, distanceLimit)
     local actors = {}
