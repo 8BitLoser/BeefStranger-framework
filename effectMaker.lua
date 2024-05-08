@@ -174,6 +174,26 @@ function effectMaker.create(params)
     return effect
 end
 
+---@param e tes3magicEffectCollisionEventData
+---@param effect tes3.effect
+function effectMaker.getComplexMag(e, effect) --Get the mag of effect from a complex spell, with multiple effects
+    for _, effects in ipairs(e.sourceInstance.sourceEffects) do
+        if effects.id == effect then
+        local complexMag = effectMaker.getMag(effects)
+            return complexMag
+        end
+    end
+end
+
+---@param effect tes3effect
+function effectMaker.getMag(effect)
+    local minMag = math.floor(effect.min)
+    local maxMag = math.floor(effect.max)
+    local eMag = math.random(minMag, maxMag)
+    return eMag
+end
+
+
 ---STOLE THESE FROM OPERATORJACK: for testing need to make my own
 effectMaker.getActorsNearTargetPosition = function(cell, targetPosition, distanceLimit)
     local actors = {}
@@ -212,13 +232,6 @@ effectMaker.getEffectFromEffectOnEffectEvent = function(event, effectId)
         end
     end
     return nil
-end
-
-function effectMaker.getMag(effect)
-    local minMag = math.floor(effect.min)
-    local maxMag = math.floor(effect.max)
-    local eMag = math.random(minMag, maxMag)
-    return eMag
 end
 
 effectMaker.getCalculatedMagnitudeFromEffect = function(effect)

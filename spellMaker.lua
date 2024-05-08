@@ -107,8 +107,8 @@ function spellMaker.create(params)
         objectType = tes3.objectType.spell, --Define objectType you're making
         id = params.id, 
         name = params.name,
-        
-        alwaysSucceeds = params.alwaysSucceeds or false,
+
+        -- alwaysSucceeds = params.alwaysSucceeds or false, --Doesnt actually work here
         autoCalc = params.autoCalc or false, --audoCalc does cost calc, and adds to npcs if they have the skill
         castType = params.castType or tes3.spellType["spell"],
         playerStart = params.playerStart or false,
@@ -116,10 +116,10 @@ function spellMaker.create(params)
 
         -- Effects 1-8 | Effect1 = effect | Efect2 = effect2
         effects = {},
-
-    
     })
-    
+
+    spell.alwaysSucceeds = params.alwaysSucceeds or false --has to be here
+
     --barely understand this, somehow cobbled together
     local i = 1                               --Start i at 1
     local effectKey = "effect"                --set effectKey to just effect
@@ -142,8 +142,6 @@ function spellMaker.create(params)
         i = i + 1                   -- raise i by 1
         effectKey = ("effect" .. i) --concatenates effect and the i, iteration its on
     end
-
-
 
     -- spell.magickaCost = params.cost or spellMaker.calculateEffectCost(spell)   --Auto Calculate spell cost if, you dont set one
     return spell
