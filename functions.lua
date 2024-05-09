@@ -15,7 +15,7 @@ functions.spell = require("BeefStranger.spellMaker")
 ---@field iter number? Number of times it'll repeat
 ---@field cb function The function ran when duration is expired
 ---@param params timer
----
+---@return mwseTimer
 --- `dur` - How long each iteration lasts
 ---
 --- `iter` - *Optional* - Number of times it'll repeat

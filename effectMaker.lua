@@ -129,7 +129,7 @@ function effectMaker.create(params)
     -- Getting all the variables from .getSchool, get in same order, and use _, to skip
     local autoIcon, areaSound, areaVFX, boltSound, boltVFX, castSound, castVFX, hitSound, hitVFX, particleTexture = effectMaker.getSchool(school)
 
-    print("Registering " .. params.id .. " in school index" .. params.school)
+    -- print("Registering " .. params.id .. " in school index" .. params.school)
     local effect = tes3.addMagicEffect({
         id = params.id,
         name = params.name,
