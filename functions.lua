@@ -1,19 +1,31 @@
 local functions = {}
 local logger = require("logging.logger")
-local log = logger.getLogger("StrangeMagic") or "Logger Not Found"
+local log = logger.new { name = "bsFunctions", logLevel = "DEBUG", logToConsole = true, }
 local spellMaker = require("BeefStranger.spellMaker")
 local effectMaker = require("BeefStranger.effectMaker")
 
+functions.effect = require("BeefStranger.effectMaker")
+functions.sound = require("BeefStranger.sounds")
+functions.playSound = require("BeefStranger.playSound")
+functions.spell = require("BeefStranger.spellMaker")
+
 ---------------------------------Timer---------------------------------
----@param duration number How long each iteration lasts
----@param iterations number Number of times it'll repeat
----@param callback function The function ran when duration is expired
-function functions.timer(duration, iterations, callback) --duration, iterations, callback, ... | ... is to pass along tickeventdata ie: e.effectInstance.target.mobile
-    iterations = iterations or 1
+---@class timer
+---@field dur number How long each iteration lasts
+---@field iter number? Number of times it'll repeat
+---@field cb function The function ran when duration is expired
+---@param params timer
+---
+--- `dur` - How long each iteration lasts
+---
+--- `iter` - *Optional* - Number of times it'll repeat
+---
+--- `cb` - The function ran when duration is expired
+function functions.timer(params)
     local timerId = timer.start{
-            duration = duration,
-            iterations = iterations,
-            callback = callback,
+            duration = params.dur,
+            iterations = params.iter or 1,
+            callback = params.cb,
     }
     return timerId
 end
