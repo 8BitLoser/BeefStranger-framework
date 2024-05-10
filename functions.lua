@@ -1,6 +1,6 @@
 local functions = {}
 local logger = require("logging.logger")
-local log = logger.new { name = "bsFunctions", logLevel = "DEBUG", logToConsole = true, }
+local log = logger.new { name = "bsFunctions", logLevel = "NONE", logToConsole = true, }
 local spellMaker = require("BeefStranger.spellMaker")
 local effectMaker = require("BeefStranger.effectMaker")
 
@@ -9,13 +9,20 @@ functions.sound = require("BeefStranger.sounds")
 functions.playSound = require("BeefStranger.playSound")
 functions.spell = require("BeefStranger.spellMaker")
 
+---@param toggle boolean Toggles debug for functions
+function functions.debug(toggle)
+    if toggle then
+        log:setLogLevel("DEBUG")
+        log:debug("Debug Enabled")
+    end
+end
 ---------------------------------Timer---------------------------------
 ---@class timer
 ---@field dur number How long each iteration lasts
 ---@field iter number? Number of times it'll repeat
 ---@field cb function The function ran when duration is expired
 ---@param params timer
----@return mwseTimer
+---@return mwseTimer timerId
 --- `dur` - How long each iteration lasts
 ---
 --- `iter` - *Optional* - Number of times it'll repeat
@@ -60,11 +67,14 @@ function functions.effectTimer(e, callback)
     local effect = #e.sourceInstance.sourceEffects > 0 and e.sourceInstance.sourceEffects[1] ---@type tes3effect
     local duration = effect and math.max(1, effect.duration) or 1
     local mag = e.effectInstance.effectiveMagnitude
-    log:debug("functions.effectTimer mag = %s", mag)
+    local iter = 0
+    log:debug("effectTimer: mag = %s", mag)
 
     local timerId = timer.start({
         duration = 1 / mag,
         callback = function()
+            iter = iter + 1
+            log:debug("effectTimer: %s", iter)
             callback() --(table.unpack(args))
         end,
         iterations = duration * mag,
@@ -147,6 +157,20 @@ function functions.getEffect(e, effectId)
 end
 ------------------------------------------------------------------------------------------------------------------------------
 
+---------------------------------duration---------------------------------
+---comment tes3.effect.
+---@param e tes3magicEffectCollisionEventData|tes3magicEffectTickEventData The tick/collision data
+---@param effectID tes3.effect The ID of the spell. Either the name or ID`(tes3.effect.light or 41)`
+---@return integer duration The duration of the effect, will return 1 if no `duration`
+function functions.duration(e, effectID)
+    local duration = functions.getEffect(e, effectID) and math.max(1, functions.getEffect(e, effectID).duration) or 1
+
+    return duration
+end
+
+
+------------------------------------------------------------------------------------------------------------------------------
+
 
 ---------------------------------RayCast---------------------------------
 ---@param maxDistance number RayCast from players eye, returns a reference
@@ -208,6 +232,19 @@ end
 ------------------------------------------------------------------------------------------------------------------------------
 
 
+---------------------------------Small Helper Functions---------------------------------
+
+
+---@param e tes3magicEffectTickEventData
+---@return tes3.spellState
+function functions.state(e)
+    return e.effectInstance.state
+end
+
+
+------------------------------------------------------------------------------------------------------------------------------
+
+
 ---------------------------------objectTypes in Table---------------------------------
 ---@type table Table to convert objectTypes inserted into its string
 functions.objectTypeNames = {
@@ -263,4 +300,34 @@ functions.objectTypeNames = {
     [1346454871] = "weapon",
 }
 ------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------spellStates in Table---------------------------------
+---@type table
+functions.stateId = {
+    [0] = "preCast",
+    [1] = "cast",
+    [4] = "beginning",
+    [5] = "working",
+    [6] = "ending",
+    [7] = "retired",
+    [8] = "workingFortify",
+    [9] = "endingFortify",
+}
+
+functions.stateName = {
+    ["preCast"] = 0,
+    ["cast"] = 1,
+    ["beginning"] = 4,
+    ["working"] = 5,
+    ["ending"] = 6,
+    ["retired"] = 7,
+    ["workingFortify"] = 8,
+    ["endingFortify"] = 9,
+}
+
+------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 return functions
