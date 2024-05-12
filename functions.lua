@@ -1,11 +1,12 @@
 local functions = {}
 local logger = require("logging.logger")
 local log = logger.new { name = "bsFunctions", logLevel = "NONE", logToConsole = true, }
-local spellMaker = require("BeefStranger.spellMaker")
-local effectMaker = require("BeefStranger.effectMaker")
+-- local spellMaker = require("BeefStranger.spellMaker")
+-- local effectMaker = require("BeefStranger.effectMaker")
 
 functions.effect = require("BeefStranger.effectMaker")
 functions.sound = require("BeefStranger.sounds")
+functions.bsSound = require("BeefStranger.sounds").bsSound
 functions.playSound = require("BeefStranger.playSound")
 functions.spell = require("BeefStranger.spellMaker")
 
@@ -16,6 +17,9 @@ function functions.debug(toggle)
         log:debug("Debug Enabled")
     end
 end
+------------------------------------------------------------------------------------------------------------------------------
+
+
 ---------------------------------Timer---------------------------------
 ---@class timer
 ---@field dur number How long each iteration lasts
@@ -28,6 +32,8 @@ end
 --- `iter` - *Optional* - Number of times it'll repeat
 ---
 --- `cb` - The function ran when duration is expired
+---
+---     functions.timer{dur = 1, iter = 3, cb = function()}
 function functions.timer(params)
     local timerId = timer.start{
             duration = params.dur,
@@ -42,18 +48,23 @@ end
 ---------------------------------onTick---------------------------------
 ---@param e tes3magicEffectTickEventData The tick event data
 ---@param action function The function to be inserted into the beginning spell state.
+---Sets up all the triggers for an effect. Usually used at the end of the onTick function ex:
+---
+---     local function onEffectTick(e)
+---         local function doThis()
+---            this thing
+---         end
+---        *functions.onTick(e, doThis)*
+---     end
 function functions.onTick(e, action)
-    if e.effectInstance.state == tes3.spellState.working then e:trigger() return end
-
-    if e.effectInstance.state == tes3.spellState["beginning"] then
-        e:trigger() e:trigger()
+if e.effectInstance.state == tes3.spellState.working then
+        e:trigger(); return
+    elseif e.effectInstance.state == tes3.spellState.beginning then
+        e:trigger();e:trigger()
         action(e)
-    end
-
-    if e.effectInstance.state == tes3.spellState.ending then
+    elseif e.effectInstance.state == tes3.spellState.ending then
         e.effectInstance.state = tes3.spellState.retired
     end
-
 end
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -62,14 +73,17 @@ end
 --- Attempt to emulate vanilla effect timer.
 ---@param e tes3magicEffectTickEventData Used to pass eventData to timer for calculations
 ---@param callback function The function the timer will run
+---Example:
+---
+---     bs.effectTimer(e, function ()
+---         target.mobile:applyDamage { damage = 1, playerAttack = true }
+---     end)
 function functions.effectTimer(e, callback)
-    -- local args = {...}
     local effect = #e.sourceInstance.sourceEffects > 0 and e.sourceInstance.sourceEffects[1] ---@type tes3effect
     local duration = effect and math.max(1, effect.duration) or 1
     local mag = e.effectInstance.effectiveMagnitude
     local iter = 0
     log:debug("effectTimer: mag = %s", mag)
-
     local timerId = timer.start({
         duration = 1 / mag,
         callback = function()
@@ -95,15 +109,30 @@ end
 ---@field doNotChangeHealth boolean? Default: false. If all armor effects except the health change should be applied. These include hit sounds, armor condition damage, and player experience gain from being hit.
 ---@param e tes3magicEffectTickEventData
 ---@param params dmgTick
-function functions.dmgTick(e, params) ---Function to quickly add Damage = effectiveMagnitude * duration on timer lasting duration
+---
+---`Function to quickly add Damage = effectiveMagnitude * duration on timer lasting duration`
+--- 
+---     functions.dmgTick(e, {damage = 1})
+---
+---*`---Parameters---`*
+--
+---`damage` - The Damage applied each tick
+--
+---`applyArmor` - If armor mitigates
+--
+---`resist` - The attribute that resists this
+--
+---`applyDifficulty` - If the difficulty modifier is used
+--
+---`playerAttack` - If the attack came from the player
+--
+---`doNotChangeHealth` - If it shouldnt actually damage but still do armor effects
+function functions.dmgTick(e, params) 
     if e.effectInstance.state == tes3.spellState.working then e:trigger() return end
-
     local ref = e.effectInstance.target
     local refHandle = tes3.makeSafeObjectHandle(ref) --Make safe handle
     local test2Id
     local iter = 1
-    -- local mag
-
     local function timerCallback()
         if refHandle and refHandle:valid() then
             log:debug("timerCallback - %s", iter); iter = iter + 1 --for debugging
@@ -136,7 +165,6 @@ function functions.dmgTick(e, params) ---Function to quickly add Damage = effect
 
     if e.effectInstance.state == tes3.spellState.ending then
         e.effectInstance.state = tes3.spellState.retired
-
         log:debug("ending")
     end
 end
@@ -146,6 +174,15 @@ end
 ---------------------------------getEffect---------------------------------
 --Took from OperatorJack--
 ---@param e tes3magicEffectCollisionEventData|tes3magicEffectTickEventData
+---@param effectId tes3.effect
+---Usage: 
+--
+---     functions.getEffect(e, tes3.effect.light)
+---     functions.getEffect(e, 41) --Same as above but with number
+--
+---`Mainly used for spells you create`
+--
+---Vanilla ID's `↓`
 function functions.getEffect(e, effectId)
     for i = 1, 8 do
         local effect = e.sourceInstance.sourceEffects[i]
@@ -158,13 +195,18 @@ end
 ------------------------------------------------------------------------------------------------------------------------------
 
 ---------------------------------duration---------------------------------
----comment tes3.effect.
 ---@param e tes3magicEffectCollisionEventData|tes3magicEffectTickEventData The tick/collision data
 ---@param effectID tes3.effect The ID of the spell. Either the name or ID`(tes3.effect.light or 41)`
 ---@return integer duration The duration of the effect, will return 1 if no `duration`
+---Usage:
+--
+---     local duration = functions.duration(e, tes3.effect.light)
+--
+---`returns duration of spell or 1 if the duration was 0`
+--
+---Vanilla ID's `↓`
 function functions.duration(e, effectID)
     local duration = functions.getEffect(e, effectID) and math.max(1, functions.getEffect(e, effectID).duration) or 1
-
     return duration
 end
 
@@ -175,6 +217,15 @@ end
 ---------------------------------RayCast---------------------------------
 ---@param maxDistance number RayCast from players eye, returns a reference
 ---@return tes3reference | nil 
+---Usage:
+--
+---     local target = functions.rayCast(900)
+--
+---`Returns a reference`
+--
+---`Ignores player`
+--
+---`maxDistance` is in game units, if you want it in ft like spell radius is divide by 22.1
 function functions.rayCast(maxDistance)
     local result = tes3.rayTest({
         position = tes3.getPlayerEyePosition(),
@@ -182,8 +233,7 @@ function functions.rayCast(maxDistance)
         ignore = {tes3.player},
         maxDistance = maxDistance,
     })
-
-    if result and result.reference then --if result is reference that has mobile data return mobile
+    if result and result.reference then --if result is reference return it
         return result.reference
     else
         return nil
@@ -222,7 +272,6 @@ end
 function functions.linearInter(base, max, progressCap, data, positive)
     local slope = (max - base)/progressCap
     local result = (slope * data + base)
-
     if positive then
         return math.min(result, max)
     else
@@ -232,9 +281,40 @@ end
 ------------------------------------------------------------------------------------------------------------------------------
 
 
+---------------------------------Lerp (LinearInterpolation with funner name)---------------------------------
+---@param base any The starting value
+---@param max any The value it ends at
+---@param progressCap any When the value of data hits this max will be the value
+---@param data any Where progressCap gets its data
+---@param isPositive boolean If true then returns a positive slope, negative if false
+---@return number
+---Usage:
+--
+---     local damage = functions.lerp(1, 3, 150, playerData.kills, true)
+--
+---`1 - is the starting value`
+--
+---`3 - is the end value`
+--
+---`150 - the cap, when kills in this example reaches 150, damage = 3, when its 0, damage = 1`
+--
+---`playerData.kills - can be anything, in this instance its player.data.kills, which keeps track of kills and increments starting value`
+--
+---`true - means the value is increasing, when false decreasing` `lerp(3, 1, 150, `playerData.kills, false)`
+--
+function functions.lerp(base, max, progressCap, data, isPositive)
+    local slope = (max - base)/progressCap
+    local result = (slope * data + base)
+    if isPositive then
+        return math.min(result, max)
+    else
+        return math.max(result, max)
+    end
+end
+------------------------------------------------------------------------------------------------------------------------------
+
+
 ---------------------------------Small Helper Functions---------------------------------
-
-
 ---@param e tes3magicEffectTickEventData
 ---@return tes3.spellState
 function functions.state(e)
