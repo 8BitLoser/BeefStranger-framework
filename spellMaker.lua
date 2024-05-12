@@ -18,7 +18,7 @@ function spellMaker.calculateEffectCost(spell)
                 ranged = 1.5 -- Increase cost by 50% for target range effects
             end
 
-            -- Calculate the cost of the effect
+            -- Calculate the cost of the effect. Formula from uesp
             local cost = ((minMag + maxMag) * (duration + 1)+ area) * (baseEffectCost / 40) * ranged
             totalCost = totalCost + cost
         end
