@@ -1,4 +1,17 @@
 local sounds = {
+    -- addSound = function(id, filename)
+    --     local sound = tes3.createObject {
+    --         id = id,
+    --         objectType = tes3.objectType.sound,
+    --         filename = filename,
+    --     }
+    --     if sound ~= nil then
+    --         print(string.format("bsSounds: %s registered", sound))
+    --     else
+    --         print(string.format("bsSounds: %s FAILED TO REGISTER", sound))
+    --     end
+    -- end,
+
     alitMOAN = "alitMOAN",
     alitROAR = "alitROAR",
     alitSCRM = "alitSCRM",
@@ -600,6 +613,60 @@ local sounds = {
     WolfSwing3 = "WolfSwing3",
     Wooden_Door_Close_1 = "Wooden Door Close 1",
     Wooden_Door_Open_1 = "Wooden Door Open 1",
+
+    bsSound = {
+        bashImpact = "bashImpact",
+        breakWood = "breakWood",
+        magicImpact = "magicImpact",
+        scifiBoom = "scifiBoom",
+        fantasyUI1 = "fantasyUI1",
+        fantasyUI2 = "fantasyUI2",
+        fantasyUI3 = "fantasyUI3",
+        fantasyUI4 = "fantasyUI4",
+        fantasyUI5 = "fantasyUI5",
+        fantasyUI6 = "fantasyUI6",
+    },
+
+    filename = {
+        bashImpact = "\\Bs\\bashImpact.wav",
+        breakWood = "\\Bs\\breakWood.wav",
+        magicImpact = "\\Bs\\magicImpact.wav",
+        scifiBoom = "\\Bs\\scifiBoom.wav",
+        fantasyUI1 = "\\Bs\\fantasyUI1.wav",
+        fantasyUI2 = "\\Bs\\fantasyUI2.wav",
+        fantasyUI3 = "\\Bs\\fantasyUI3.wav",
+        fantasyUI4 = "\\Bs\\fantasyUI4.wav",
+        fantasyUI5 = "\\Bs\\fantasyUI5.wav",
+        fantasyUI6 = "\\Bs\\fantasyUI6.wav",
+    }
+
 }
+
+function sounds.addSound(id, filename)
+    local sound = tes3.createObject{    
+        id = id,
+        objectType = tes3.objectType.sound,
+        filename = filename,
+        minDistance = 0,
+        maxDistance = 100,
+        volume = 1,
+    }
+    if sound ~= nil then
+        print(string.format("bsSounds: %s registered", sound))
+    else
+        print(string.format("bsSounds: %s FAILED TO REGISTER", sound))
+    end
+end
+
+
+
+function sounds.register()
+
+    for id, filename in pairs(sounds.filename) do
+        sounds.addSound(id, filename)
+    end
+
+end
+
 
 return sounds
