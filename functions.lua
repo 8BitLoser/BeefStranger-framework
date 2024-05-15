@@ -4,7 +4,7 @@ local log = logger.new { name = "bsFunctions", logLevel = "NONE", logToConsole =
 -- local spellMaker = require("BeefStranger.spellMaker")
 -- local effectMaker = require("BeefStranger.effectMaker")
 
-functions.effect = require("BeefStranger.effectMaker")
+functions.effect = require("BeefStranger.effectMaker") 
 functions.sound = require("BeefStranger.sounds")
 functions.bsSound = require("BeefStranger.sounds").bsSound
 functions.playSound = require("BeefStranger.playSound")
@@ -379,31 +379,29 @@ end
 function functions.createLog(name, level)
     if not level then level = "DEBUG" end
     local logging = require("logging.logger").new{ name = name, logLevel = level, logToConsole = true}
-
     return logging
 end
 --------------------
 --------------------
----comment
 ---@param name string Name of the logger to load
----@return table
+---@return table; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
+---@type mwseLogger
+---Usage:
+--
+---     local log = getLog("MyLogName")
+---     local trace, debug, info = log.trace, log.debug, log.info
+--
+---     trace("This is a trace message")
+---     debug("This is a debug message")
+---     info("This is a info message")
 function functions.getLog(name)
     local logging = require("logging.logger").getLogger(name) or ""
-    -- local trace = function (...) logging:trace(...) end
-    -- local debug = function (...) logging:debug(...) end
-    -- local info = function (...) logging:info(...) end
-    -- local warn = function (...) logging:warn(...) end
-    -- local error = function (...) logging:error(...) end
-
-    -- return trace, debug, info, warn, error
-    return
-    {
-    log = logging,
-    trace = function (...) logging:trace(...) end,
-    debug = function (...) logging:debug(...) end,
-    info = function (...) logging:info(...) end,
-    warn = function (...) logging:warn(...) end,
-    error = function (...) logging:error(...) end,
+    return{
+        trace = function (...) logging:trace(...) end,
+        debug = function (...) logging:debug(...) end,
+        info = function (...) logging:info(...) end,
+        warn = function (...) logging:warn(...) end,
+        error = function (...) logging:error(...) end,
     }
 end
 --------------------
