@@ -315,12 +315,114 @@ end
 
 
 ---------------------------------Small Helper Functions---------------------------------
+---Get onTick spells state
 ---@param e tes3magicEffectTickEventData
 ---@return tes3.spellState
 function functions.state(e)
     return e.effectInstance.state
 end
+--------------------
+--------------------
+---Removes and Adds back the spell. Made for updating a spells cost after the player has it.
+---@param ref tes3reference
+---@param spell string
+function functions.refreshSpell(ref, spell)
+    tes3.removeSpell{reference = ref, spell = spell}
+    tes3.addSpell{reference = ref, spell = spell}
+end
+--------------------
+--------------------
+---More convienent addSpell when you're just adding spell to a ref
+---@param ref any Who to add the spell to
+---@param spell string Spell Id
+function functions.addSpell(ref, spell)
+    tes3.addSpell{reference = ref, spell = spell}
+end
+--------------------
+--------------------
+function functions.bulkAddSpells(ref, spellTable)
+    for _, spell in pairs(spellTable) do
+        if not tes3.hasSpell{reference = ref, spell = spell.spellId} then
+            tes3.addSpell{reference = ref, spell = spell.spellId}
+        else
+            log:debug("bullkAddSpells - Player already has %s, skipping", spell.spellId)
+        end
+    end
+end
+--------------------
+---Adds the spell to the `ref` and sets them to sell spells
+---@param ref string The id of the reference ex: "fargoth"
+---@param spellId any The id of the spell ex: "fire bite"
+---Usage:
+--
+---     functions.sellSpell("fargoth", "rallying touch")
+function functions.sellSpell(ref, spellId)
+    local seller = tes3.getReference(ref)
+    if seller == tes3.player or seller == tes3.mobilePlayer then return end
+    if seller.object.aiConfig.offersSpells == false then
+        seller.object.aiConfig.offersSpells = true
+        log:debug("%s now offersSpells", seller)
+    end
+    functions.addSpell(seller, spellId)
+    log:debug("%s added to %s", spellId, seller)
+end
+--------------------
+--------------------
+---@param name string Name of the logger
+---@param level mwseLoggerLogLevel? logLevel : Defaults to "DEBUG"
+---Usage:
+--
+---     local log = functions.createLog("FunctionsLog", "TRACE")
+---`    This creates a log with the name of "FunctionsLog" with a logLevel of "TRACE"`
+--
+---`Log Levels:`
+function functions.createLog(name, level)
+    if not level then level = "DEBUG" end
+    local logging = require("logging.logger").new{ name = name, logLevel = level, logToConsole = true}
 
+    return logging
+end
+--------------------
+--------------------
+---comment
+---@param name string Name of the logger to load
+---@return table
+function functions.getLog(name)
+    local logging = require("logging.logger").getLogger(name) or ""
+    -- local trace = function (...) logging:trace(...) end
+    -- local debug = function (...) logging:debug(...) end
+    -- local info = function (...) logging:info(...) end
+    -- local warn = function (...) logging:warn(...) end
+    -- local error = function (...) logging:error(...) end
+
+    -- return trace, debug, info, warn, error
+    return
+    {
+    log = logging,
+    trace = function (...) logging:trace(...) end,
+    debug = function (...) logging:debug(...) end,
+    info = function (...) logging:info(...) end,
+    warn = function (...) logging:warn(...) end,
+    error = function (...) logging:error(...) end,
+    }
+end
+--------------------
+--------------------
+---Small helper function to handle keyUp event, includes a check for menuMode, not really faster but i wanted it.
+---@param key string The Key to trigger it ex: "p" 
+---@param func function The function you want to run on key press
+function functions.keyUp(key, func)
+    local function onLoad() --only register event when game is loaded
+        local function keyAction() --needed for menuMode check
+            if not tes3.menuMode() then
+                func() --This is where the passed along function runs
+            end
+        end
+        event.register("keyUp", keyAction, { filter = tes3.scanCode[key] })
+    end
+    event.register("loaded", onLoad) --Wait until game is loaded to register keyUp
+end
+--------------------
 
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -380,6 +482,35 @@ functions.objectTypeNames = {
     [1346454871] = "weapon",
 }
 ------------------------------------------------------------------------------------------------------------------------------
+functions.skills = {
+    [0] = "block",
+    [1] = "armorer",
+    [2] = "mediumArmor",
+    [3] = "heavyArmor",
+    [4] = "bluntWeapon",
+    [5] = "longBlade",
+    [6] = "axe",
+    [7] = "spear",
+    [8] = "athletics",
+    [9] = "enchant",
+    [10] = "destruction",
+    [11] = "alteration",
+    [12] = "illusion",
+    [13] = "conjuration",
+    [14] = "mysticism",
+    [15] = "restoration",
+    [16] = "alchemy",
+    [17] = "unarmored",
+    [18] = "security",
+    [19] = "sneak",
+    [20] = "acrobatics",
+    [21] = "lightArmor",
+    [22] = "shortBlade",
+    [23] = "marksman",
+    [24] = "mercantile",
+    [25] = "speechcraft",
+    [26] = "handToHand",
+}
 
 ---------------------------------spellStates in Table---------------------------------
 ---@type table

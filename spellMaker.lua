@@ -1,26 +1,28 @@
 local spellMaker = {}
 local logger = require("logging.logger")
-local log = logger.getLogger("Arkays Logger") or "Logger Not Found"
+local log = logger.new { name = "spellMaker", logLevel = "DEBUG", logToConsole = true, }
 
 function spellMaker.calculateEffectCost(spell)
     local totalCost = 0 --Initialize totalCost to add too
     for i=1, spell:getActiveEffectCount() do -- this line straight taken from magickaExpanded framework
-        local effect = spell.effects[i] --set effect to for every id.effects[1-2-3-etc] 
+        local effect = spell.effects[i] ---@type tes3effect set effect to for every id.effects[1-2-3-etc] 
         if (effect ~= nil) then --if effect is valid
             local minMag = effect.min or 0
             local maxMag = effect.max or 1
-            local duration = effect.duration or 1
-            local area = effect.area or 1
-            local baseEffectCost = effect.cost
+            local duration = effect.duration or 0
+            local area = effect.radius or 1
+            local baseEffectCost = effect.object.baseMagickaCost or 5
             local ranged = 1
 
             if effect.rangeType == tes3.effectRange.target then
                 ranged = 1.5 -- Increase cost by 50% for target range effects
             end
 
-            -- Calculate the cost of the effect. Formula from uesp
-            local cost = ((minMag + maxMag) * (duration + 1)+ area) * (baseEffectCost / 40) * ranged
+
+            -- Calculate the cost of the effect. Formula from uesp is wrong. the end result has to be divided by 2 to match built in spells
+            local cost = (((minMag + maxMag) * (duration + 1)+ area) * (baseEffectCost / 40) * ranged) / 2
             totalCost = totalCost + cost
+            -- log:debug("%s - min-%s max-%s dur-%s area-%s baseCost-%s range-%s totalCost-%s",effect ,minMag,maxMag,duration,area,baseEffectCost,ranged, totalCost)
         end
     end
     return totalCost
@@ -81,7 +83,7 @@ end ]]
 --- @field castType tes3.spellType? 'ability' | 'blight' | 'curse' | 'disease' | 'power' | 'spell'? Optional. Defaults to spell
 --- @field alwaysSucceeds boolean? Optional. A flag that determines if casting the spell will always succeed. Defaults to false.
 --- @field effect tes3.effect The effect ID from the tes3.effect table.
---- @field min integer The minimum magnitude of the spell's effect.
+--- @field min? integer The minimum magnitude of the spell's effect.
 --- @field max? integer Optional. The maximum magnitude of the spell's effect. Defaults to min.
 --- @field duration? integer Optional. The duration of the spell's effect. Defaults to 0.
 --- @field range tes3.effectRange? Optional. The range type of the spell. Must be 'self' for abilities. Defaults to 'self'.
@@ -103,7 +105,7 @@ end ]]
 --- @field duration2? integer Optional up to duration8. Defaults to first effects duration.
 --- @param params SpellParamsCreate The configuration table for the new spell.
 function spellMaker.create(params)
-    local spell = tes3.getObject(params.id) or tes3.createObject({
+    local spell = tes3.getObject(params.id) or tes3.createObject({ ---@type tes3spell
         objectType = tes3.objectType.spell, --Define objectType you're making
         id = params.id, 
         name = params.name,
@@ -119,6 +121,8 @@ function spellMaker.create(params)
     })
 
     spell.alwaysSucceeds = params.alwaysSucceeds or false --has to be here
+    -- spell.basePurchaseCost = 1
+    -- spell.value = 50
 
     --barely understand this, somehow cobbled together
     local i = 1                               --Start i at 1

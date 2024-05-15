@@ -1,5 +1,8 @@
 local effectMaker = {}
 
+-- local logger = require("logging.logger")
+local log = require("logging.logger").new { name = "bsEffects", logLevel = "INFO", logToConsole = true, }
+
 local schools = {
     [0] = { -- Alteration
         autoIcon = "s\\Tx_s_burden.dds",
@@ -74,8 +77,14 @@ local schools = {
         particleTexture = "vfx_myst_flare01.tga"
     }
 }
-function effectMaker.getSchool(school)
-    return schools[school] or schools[0]
+-- function effectMaker.getSchool(school)
+--     return schools[school] or schools[0]
+-- end
+
+function effectMaker.canCastFix(params)
+    if not params.canCastSelf and params.canCastTouch and not params.canCastTarget then
+        
+    end
 end
 
 ------------------------------------------------------------------------------------------------------------------------------
@@ -100,9 +109,9 @@ end
 --- @field speed number? Default: 1 : The speed at which the effect travels.
 --- @field lighting table? Optional. Example { x = 0.99, y = 0.26, z = 0.53 }. Lighting effects associated with the magic effect.
 --- @field usesNegativeLighting boolean? Whether the effect uses negative lighting.
---- @field hasContinuousVFX boolean? Default: false : Whether the effect has continuous visual effects.
---- @field allowEnchanting boolean? Default: false : Whether the effect can be used in enchanting.
---- @field allowSpellmaking boolean? Default: false : Whether the effect can be used in spellmaking.
+--- @field hasContinuousVFX boolean? Default: true : Whether the effect has continuous visual effects.
+--- @field allowEnchanting boolean? Default: true : Whether the effect can be used in enchanting.
+--- @field allowSpellmaking boolean? Default: true : Whether the effect can be used in spellmaking.
 --- @field appliesOnce boolean? Default: false: Whether the effect applies once or continuously.
 --- @field canCastSelf boolean? Default: true: Whether the effect can be cast on self.
 --- @field canCastTarget boolean? Default: true: Whether the effect can be cast on a target.
@@ -122,17 +131,19 @@ end
 function effectMaker.create(params)
     --Default name if not supplied. (dont remember why i needed this, something wasnt working right)
     params.name = params.name or "Error: Unnamed Effect"
+    log:info("%s effect registered to %s", params.name, params.id)
+
     -- Set school variable to either the entered school or a default if something goes wrong.
     local school = params.school or tes3.magicSchool["alteration"]
 
-    local autoSchool = effectMaker.getSchool(school)
-   
+    local autoSchool = schools[school] or schools[0]
+
 
     -- print("Registering " .. params.id .. " in school index" .. params.school)
     local effect = tes3.addMagicEffect({
         id = params.id,
         name = params.name,
-        baseCost = params.baseCost or 1,
+        baseCost = params.baseCost or 5,
         school = params.school,
 
         areaSound = params.areaSound or autoSchool.areaSound,
@@ -142,7 +153,7 @@ function effectMaker.create(params)
         castSound = params.castSound or autoSchool.castSound,
         castVFX = params.castVFX or autoSchool.castVFX,
         description = params.description,
-        hasContinuousVFX = params.hasContinuousVFX or false,
+        hasContinuousVFX = params.hasContinuousVFX or true,
         hitSound = params.hitSound or autoSchool.hitSound,
         hitVFX = params.hitVFX or autoSchool.hitVFX,
         icon = params.icon or autoSchool.autoIcon or "default icon.tga",
@@ -153,8 +164,8 @@ function effectMaker.create(params)
         speed = params.speed or 1,
         usesNegativeLighting = params.usesNegativeLighting or false,
 
-        allowEnchanting = params.allowEnchanting or false,
-        allowSpellmaking = params.allowSpellmaking or false,
+        allowEnchanting = params.allowEnchanting or true,
+        allowSpellmaking = params.allowSpellmaking or true,
         appliesOnce = params.appliesOnce or false,
 
         canCastSelf = (params.canCastSelf == nil) and true or params.canCastSelf,
