@@ -1,17 +1,4 @@
 local sounds = {
-    -- addSound = function(id, filename)
-    --     local sound = tes3.createObject {
-    --         id = id,
-    --         objectType = tes3.objectType.sound,
-    --         filename = filename,
-    --     }
-    --     if sound ~= nil then
-    --         print(string.format("bsSounds: %s registered", sound))
-    --     else
-    --         print(string.format("bsSounds: %s FAILED TO REGISTER", sound))
-    --     end
-    -- end,
-
     alitMOAN = "alitMOAN",
     alitROAR = "alitROAR",
     alitSCRM = "alitSCRM",
