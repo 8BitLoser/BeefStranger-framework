@@ -314,15 +314,19 @@ end
 ------------------------------------------------------------------------------------------------------------------------------
 
 
----------------------------------Small Helper Functions---------------------------------
+---------------------------------Small Helper Functions---------------------------------------------
+----------------------------------------------------------------------------------------------------
+---`state`
+----------------------------------------------------------------------------------------------------
 ---Get onTick spells state
 ---@param e tes3magicEffectTickEventData
 ---@return tes3.spellState
 function functions.state(e)
     return e.effectInstance.state
 end
---------------------
---------------------
+----------------------------------------------------------------------------------------------------
+---`refreshSpell`
+----------------------------------------------------------------------------------------------------
 ---Removes and Adds back the spell. Made for updating a spells cost after the player has it.
 ---@param ref tes3reference
 ---@param spell string
@@ -330,16 +334,18 @@ function functions.refreshSpell(ref, spell)
     tes3.removeSpell{reference = ref, spell = spell}
     tes3.addSpell{reference = ref, spell = spell}
 end
---------------------
---------------------
+----------------------------------------------------------------------------------------------------
+---`addSpell`
+----------------------------------------------------------------------------------------------------
 ---More convienent addSpell when you're just adding spell to a ref
 ---@param ref any Who to add the spell to
 ---@param spell string Spell Id
 function functions.addSpell(ref, spell)
     tes3.addSpell{reference = ref, spell = spell}
 end
---------------------
---------------------
+----------------------------------------------------------------------------------------------------
+---`bulkAddSpells`
+----------------------------------------------------------------------------------------------------
 function functions.bulkAddSpells(ref, spellTable)
     for _, spell in pairs(spellTable) do
         if not tes3.hasSpell{reference = ref, spell = spell.spellId} then
@@ -349,7 +355,23 @@ function functions.bulkAddSpells(ref, spellTable)
         end
     end
 end
---------------------
+----------------------------------------------------------------------------------------------------
+---`distributeSpells`
+----------------------------------------------------------------------------------------------------
+function functions.distributeSpells(spellTable) 
+    for key, spell in pairs(spellTable) do
+        if tes3.hasSpell{reference = spell.seller, spell = spell.spellId} then
+            log:debug("%s has %s", spell.seller, spell.spellId)
+            -- break
+        else
+            log:debug("Adding %s to %s", spell.spellId, spell.seller)
+            functions.sellSpell(spell.seller, spell.spellId)
+        end
+    end
+end
+----------------------------------------------------------------------------------------------------
+---`sellSpell`
+----------------------------------------------------------------------------------------------------
 ---Adds the spell to the `ref` and sets them to sell spells
 ---@param ref string The id of the reference ex: "fargoth"
 ---@param spellId any The id of the spell ex: "fire bite"
@@ -366,8 +388,9 @@ function functions.sellSpell(ref, spellId)
     functions.addSpell(seller, spellId)
     log:debug("%s added to %s", spellId, seller)
 end
---------------------
---------------------
+----------------------------------------------------------------------------------------------------
+---`createLog`
+----------------------------------------------------------------------------------------------------
 ---@param name string Name of the logger
 ---@param level mwseLoggerLogLevel? logLevel : Defaults to "DEBUG"
 ---Usage:
@@ -381,8 +404,9 @@ function functions.createLog(name, level)
     local logging = require("logging.logger").new{ name = name, logLevel = level, logToConsole = true}
     return logging
 end
---------------------
---------------------
+----------------------------------------------------------------------------------------------------
+---`getLog`
+----------------------------------------------------------------------------------------------------
 ---@param name string Name of the logger to load
 ---@return table; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
 ---@type mwseLogger
@@ -404,8 +428,9 @@ function functions.getLog(name)
         error = function (...) logging:error(...) end,
     }
 end
---------------------
---------------------
+----------------------------------------------------------------------------------------------------
+---`keyUp`
+----------------------------------------------------------------------------------------------------
 ---Small helper function to handle keyUp event, includes a check for menuMode, not really faster but i wanted it.
 ---@param key string The Key to trigger it ex: "p" 
 ---@param func function The function you want to run on key press
@@ -420,8 +445,16 @@ function functions.keyUp(key, func)
     end
     event.register("loaded", onLoad) --Wait until game is loaded to register keyUp
 end
---------------------
+----------------------------------------------------------------------------------------------------
+---`glowFX`
+---@param ref tes3reference The reference to apply the Fx to
+---@param effectId tes3.effect
+function functions.glowFX(ref, effectId)
+    tes3.createVisualEffect({ lifespan = 1, reference = ref, magicEffectId = effectId, })
+end
+----------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 
 
