@@ -218,16 +218,41 @@ function functions.duration(e, effectID)
     local duration = functions.getEffect(e, effectID) and math.max(1, functions.getEffect(e, effectID).duration) or 1
     return duration
 end
-
-
 ------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+---`shuffleInv`
+----------------------------------------------------------------------------------------------------
+---I didnt make this, its a shuffler made from others using the Fisher-Yates algoritm | Which i dont understand
+---@param t table<number, tes3itemStack> -- The inventory table to shuffle.
+---@return table<number, tes3itemStack> -- The shuffled inventory table.
+---Usage:
+--
+---     for _, stack in pairs(functions.shuffleInv(target.object.inventory)) do
+---        log:debug("%s", stack.object.name)
+---      end
+---     `This returns a shuffled list of items in the targets inventory`
+function functions.shuffleInv(t)
+    local rand = math.random
+    local tCopy = {}
+    -- Copy the original table to tCopy
+    for i, v in pairs(t) do
+        tCopy[i] = v
+    end
 
-
+    local iterations = #tCopy
+    local j
+    for i = iterations, 2, -1 do
+        j = rand(i)
+        tCopy[i], tCopy[j] = tCopy[j], tCopy[i]
+    end
+    return tCopy
+end
+------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
 ---`rayCast`
 ----------------------------------------------------------------------------------------------------
 ---@param maxDistance number RayCast from players eye, returns a reference
----@return tes3reference | nil 
+---@return tes3reference result
 ---Usage:
 --
 ---     local target = functions.rayCast(900)
@@ -244,18 +269,18 @@ function functions.rayCast(maxDistance)
         ignore = {tes3.player},
         maxDistance = maxDistance,
     })
-    if result and result.reference then --if result is reference return it
-        return result.reference
-    else
-        return nil
-    end
+    -- if result and result.reference then --if result is reference return it
+    --     return result.reference
+    -- else
+    --     return nil
+    -- end
+    return result and result.reference
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
 ----------------------------------------------------------------------------------------------------
 ---`typeCheck`
 ----------------------------------------------------------------------------------------------------
----@param ref tes3reference The reference to check the type of. 
+---@param ref tes3reference|tes3itemStack|tes3item  The reference to check the type of. ***`NOTE: This should be the base reference, as object.objectType is tacked on the end`***
 ---@param objType string|tes3.objectType|number The type to compare to, can be "npc" or tes3.objectType.npc, or even 1598246990
 ---@param info? boolean Add true as last param to log objectType to console, used with functions.debug(true)
 ---Usage:
@@ -267,20 +292,32 @@ end
 ---     end
 function functions.typeCheck(ref, objType, info)
     local objectType = objType
-    if type(objType) == "string" then objectType = tes3.objectType[objType] end
+    if type(objType) == "string" then objectType = tes3.objectType[objType] end --Conert string to ObjectType Value
+
+    local refType
+    if type(ref) == "number" then
+        refType = ref
+    elseif type(ref.object) == "userdata" then
+        refType = ref.object.objectType
+    elseif type(ref.objectType) == "number" then
+        refType = ref.objectType
+    else
+        error("Invalid ref passed to typeCheck", 1)
+    end
 
     if info == true then 
-        log:debug("%s objectType = %s", ref.object.name, functions.objectTypeNames[ref.object.objectType]) 
+        log:debug("%s | objectType = %s", ref.object and ref.object.name or "BaseRef not passed", functions.objectTypeNames[refType]) 
     end
 
-    if (ref.object.objectType == objectType) then
-        return true
-    else
-        return false
-    end
+    return refType == objectType
+
+    -- if (ref.object.objectType == objectType) then
+    --     return true
+    -- else
+    --     return false
+    -- end
 end
-
-
+------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
 ---`linearInter` 
 ----------------------------------------------------------------------------------------------------
@@ -320,12 +357,10 @@ function functions.linearInter(base, max, progressCap, data, positive)
     end
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
-
 ----------------------------------------------------------------------------------------------------
 ---`lerp`
 ----------------------------------------------------------------------------------------------------
----`I dont understand this at all, its cobbled together from random tidbits I found online, it works somehow`
+---`I dont understand this at all, its cobbled together from random tidbits I found online, it works through magic.`
 ---@param base any The starting value
 ---@param max any The value it ends at
 ---@param progressCap any When the value of data hits this max will be the value
@@ -355,8 +390,6 @@ function functions.lerp(base, max, progressCap, data, isPositive)
     end
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
-
 ---------------------------------Small Helper Functions---------------------------------------------
 ----------------------------------------------------------------------------------------------------
 ---`state`
@@ -452,7 +485,6 @@ end
 ----------------------------------------------------------------------------------------------------
 ---@param name string Name of the logger to load
 ---@return table; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
----@type mwseLogger
 ---Usage:
 --
 ---     local log = getLog("MyLogName")
@@ -496,13 +528,32 @@ end
 function functions.glowFX(ref, effectId)
     tes3.createVisualEffect({ lifespan = 1, reference = ref, magicEffectId = effectId, })
 end
-
+----------------------------------------------------------------------------------------------------
+---`equipMagic`
+----------------------------------------------------------------------------------------------------
+function functions.equipMagic(spellId)
+    tes3.mobilePlayer:equipMagic{source = spellId}
+end
+----------------------------------------------------------------------------------------------------
+---`msg`
+----------------------------------------------------------------------------------------------------
+---Just a shorthand for messageBox
+---@param ... any|tes3.messageBox.messageOrParams
+--- - Usage: Same as tes3.messageBox
+---
+---         functions.msg("Yo dayo")
+--- - This obviously works better when requiring like this:
+--
+---         local bs = require("BeefStranger.functions")
+function functions.msg(...)
+    tes3.messageBox(...)
+end
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 
 
----------------------------------objectTypes in Table---------------------------------
----@type table Table to convert objectTypes inserted into its string
+---------------------------------objectTypes in Table---------------------------------<br>
+---@type (number | string)[] Table to convert objectTypes inserted into its string
 functions.objectTypeNames = {
     [1230259009] = "activator",
     [1212369985] = "alchemy",
