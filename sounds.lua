@@ -602,6 +602,7 @@ local sounds = {
     Wooden_Door_Open_1 = "Wooden Door Open 1",
 
     bsSound = {
+        ---Sounds from https://freesound.org
         bashImpact = "bashImpact",
         breakWood = "breakWood",
         magicImpact = "magicImpact",
