@@ -10,6 +10,11 @@ functions.bsSound = require("BeefStranger.sounds").bsSound
 functions.playSound = require("BeefStranger.playSound")
 functions.spell = require("BeefStranger.spellMaker")
 
+
+----------------------------------------------------------------------------------------------------
+---`Functions Logging`
+----------------------------------------------------------------------------------------------------
+---This just sets the log level for functions to debug, and logs to the console
 ---@param toggle boolean Toggles debug for functions
 function functions.debug(toggle)
     if toggle then
@@ -17,9 +22,48 @@ function functions.debug(toggle)
         log:debug("Debug Enabled")
     end
 end
+----------------------------------------------------------------------------------------------------
+---`createLog`
+----------------------------------------------------------------------------------------------------
+---@param name string Name of the logger
+---@param level mwseLoggerLogLevel? logLevel : Defaults to "DEBUG"
+---@param ...? mwseLoggerInputData
+---Usage:
+--
+---     local log = functions.createLog("MyLogName", "TRACE")
+---`    This creates a log with the name of "MyLogName" with a logLevel of "TRACE"`
+--
+---`Log Levels:`
+function functions.createLog(name, level, ...)
+    if not level then level = "DEBUG" end
+    local logging = require("logging.logger").new{ name = name, logLevel = level, logToConsole = true, ...}
+    return logging
+end
+----------------------------------------------------------------------------------------------------
+---`getLog`
+----------------------------------------------------------------------------------------------------
+---@param name string Name of the logger to load
+---@return table; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
+---Usage:
+--
+---     local log = getLog("MyLogName")
+---     local trace, debug, info = log.trace, log.debug, log.info
+---     
+---     log.trace("This is a trace message")
+---     trace("This is a trace message")
+---     debug("This is a debug message")
+---     info("This is a info message")
+function functions.getLog(name)
+    local logging = require("logging.logger").getLogger(name) or ""
+    return{
+        trace = function (...) logging:trace(...) end,
+        debug = function (...) logging:debug(...) end,
+        info = function (...) logging:info(...) end,
+        warn = function (...) logging:warn(...) end,
+        error = function (...) logging:error(...) end,
+    }
+end
 ------------------------------------------------------------------------------------------------------------------------------
-
-
 ----------------------------------------------------------------------------------------------------
 ---`timer`
 ----------------------------------------------------------------------------------------------------
@@ -45,8 +89,6 @@ function functions.timer(params)
     return timerId
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
-
 ----------------------------------------------------------------------------------------------------
 ---`onTick`
 ----------------------------------------------------------------------------------------------------
@@ -71,8 +113,6 @@ if e.effectInstance.state == tes3.spellState.working then
     end
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
-
 ----------------------------------------------------------------------------------------------------
 ---`effectTimer`
 ----------------------------------------------------------------------------------------------------
@@ -102,8 +142,6 @@ function functions.effectTimer(e, callback)
     return timerId
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
-
 ----------------------------------------------------------------------------------------------------
 ---`dmgTick`
 ----------------------------------------------------------------------------------------------------
@@ -174,8 +212,6 @@ function functions.dmgTick(e, params)
     end
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
-
 ----------------------------------------------------------------------------------------------------
 ---`getEffect`
 ----------------------------------------------------------------------------------------------------
@@ -200,7 +236,6 @@ function functions.getEffect(e, effectId)
     return nil
 end
 ------------------------------------------------------------------------------------------------------------------------------
-
 ----------------------------------------------------------------------------------------------------
 ---`duration`
 ----------------------------------------------------------------------------------------------------
@@ -222,7 +257,7 @@ end
 ----------------------------------------------------------------------------------------------------
 ---`shuffleInv`
 ----------------------------------------------------------------------------------------------------
----I didnt make this, its a shuffler made from others using the Fisher-Yates algoritm | Which i dont understand
+---I didnt make this, its a shuffler made from other examples using the Fisher-Yates algoritm | Which I dont understand
 ---@param t table<number, tes3itemStack> -- The inventory table to shuffle.
 ---@return table<number, tes3itemStack> -- The shuffled inventory table.
 ---Usage:
@@ -230,22 +265,22 @@ end
 ---     for _, stack in pairs(functions.shuffleInv(target.object.inventory)) do
 ---        log:debug("%s", stack.object.name)
 ---      end
----     `This returns a shuffled list of items in the targets inventory`
+--- - `This returns a shuffled list of items in the targets inventory`
 function functions.shuffleInv(t)
     local rand = math.random
-    local tCopy = {}
+    local invCopy = {}
     -- Copy the original table to tCopy
     for i, v in pairs(t) do
-        tCopy[i] = v
+        invCopy[i] = v
     end
 
-    local iterations = #tCopy
+    local iterations = #invCopy
     local j
     for i = iterations, 2, -1 do
         j = rand(i)
-        tCopy[i], tCopy[j] = tCopy[j], tCopy[i]
+        invCopy[i], invCopy[j] = invCopy[j], invCopy[i]
     end
-    return tCopy
+    return invCopy
 end
 ------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
@@ -390,7 +425,11 @@ function functions.lerp(base, max, progressCap, data, isPositive)
     end
 end
 ------------------------------------------------------------------------------------------------------------------------------
+
+
 ---------------------------------Small Helper Functions---------------------------------------------
+
+
 ----------------------------------------------------------------------------------------------------
 ---`state`
 ----------------------------------------------------------------------------------------------------
@@ -463,45 +502,6 @@ function functions.sellSpell(ref, spellId)
     end
     functions.addSpell(seller, spellId)
     log:debug("%s added to %s", spellId, seller)
-end
-----------------------------------------------------------------------------------------------------
----`createLog`
-----------------------------------------------------------------------------------------------------
----@param name string Name of the logger
----@param level mwseLoggerLogLevel? logLevel : Defaults to "DEBUG"
----Usage:
---
----     local log = functions.createLog("FunctionsLog", "TRACE")
----`    This creates a log with the name of "FunctionsLog" with a logLevel of "TRACE"`
---
----`Log Levels:`
-function functions.createLog(name, level)
-    if not level then level = "DEBUG" end
-    local logging = require("logging.logger").new{ name = name, logLevel = level, logToConsole = true}
-    return logging
-end
-----------------------------------------------------------------------------------------------------
----`getLog`
-----------------------------------------------------------------------------------------------------
----@param name string Name of the logger to load
----@return table; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
----Usage:
---
----     local log = getLog("MyLogName")
----     local trace, debug, info = log.trace, log.debug, log.info
---
----     trace("This is a trace message")
----     debug("This is a debug message")
----     info("This is a info message")
-function functions.getLog(name)
-    local logging = require("logging.logger").getLogger(name) or ""
-    return{
-        trace = function (...) logging:trace(...) end,
-        debug = function (...) logging:debug(...) end,
-        info = function (...) logging:info(...) end,
-        warn = function (...) logging:warn(...) end,
-        error = function (...) logging:error(...) end,
-    }
 end
 ----------------------------------------------------------------------------------------------------
 ---`keyUp`
