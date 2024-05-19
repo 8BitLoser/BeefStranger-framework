@@ -73,18 +73,22 @@ function spellMaker.create(params)
     spell.alwaysSucceeds = params.alwaysSucceeds or false --has to be here
 
     --barely understand this, somehow cobbled together
-    local i = 1                               --Start i at 1
-    local effectKey = "effect"                --set effectKey to just effect
-    while params[effectKey] do                --while effectKey is effect do
+    local effectKeyBase = "effect"                --set effectKey to just effect
+    for i = 1, 8 do --for effect 1 - 8 do
+        local effectKey = effectKeyBase .. (i == 1 and "" or i)
+        if not params[effectKey] then
+            break
+        end
+
         local suffix = (i == 1 and "" or i)   --setup suffix for effect making, if i is 1 its blank, else its i, makes it skip 1 to make it nicer for simple spells
         local effect = spell.effects[i] or {} --set effect to the next spell.effects table or create one
 
         effect.id = params[effectKey]
         --Concatenate all params with the suffix number
-        effect.attribute = params["attribute" .. suffix]
+        effect.attribute = params["attribute" .. suffix] or nil
         effect.duration = params["duration" .. suffix] or params.duration or 1
         effect.max = params["max" .. suffix] or params["min" .. suffix]
-        effect.min = params["min" .. suffix] or params.min or 0
+        effect.min = params["min" .. suffix] or 0
         effect.radius = params["radius" .. suffix] or 0
         effect.rangeType = params["range" .. suffix] or tes3.effectRange.self
         effect.skill = params["skill" .. suffix] or nil
@@ -93,6 +97,7 @@ function spellMaker.create(params)
         spell.effects[i] = effect
         i = i + 1                   -- raise i by 1
         effectKey = ("effect" .. i) --concatenates effect and the i, iteration its on
+        
     end
     return spell
 end
