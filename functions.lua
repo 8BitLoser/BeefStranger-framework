@@ -35,7 +35,8 @@ end
 --
 ---`Log Levels:`
 function functions.createLog(name, level, ...)
-    if not level then level = "DEBUG" end
+    level = level or "DEBUG"
+    -- if not level then level = "DEBUG" end
     local logging = require("logging.logger").new{ name = name, logLevel = level, logToConsole = true, ...}
     return logging
 end
@@ -73,14 +74,17 @@ end
 ---@field cb function The function ran when duration is expired
 ---@param params timer
 ---@return mwseTimer timerId
---- `dur` - How long each iteration lasts
+--- - `dur` - How long each iteration lasts
+--- - `iter` - *Optional* - Number of times it'll repeat
+--- - `cb` - The function ran when duration is expired\
 ---
---- `iter` - *Optional* - Number of times it'll repeat
----
---- `cb` - The function ran when duration is expired
----
+--Usage:
+--
 ---     functions.timer{dur = 1, iter = 3, cb = function()}
 function functions.timer(params)
+    assert(type(params.dur) == "number", "Parameter 'dur' must be a number")    --ChatGPT test says this is good practice so im testing it
+    assert(type(params.cb) == "function", "Parameter 'cb' must be a function")  --ChatGPT test says this is good practice so im testing it
+
     local timerId = timer.start{
             duration = params.dur,
             iterations = params.iter or 1,
@@ -100,13 +104,15 @@ end
 ---         local function doThis()
 ---            this thing
 ---         end
----        *functions.onTick(e, doThis)*
+---        functions.onTick(e, doThis)
 ---     end
 function functions.onTick(e, action)
-if e.effectInstance.state == tes3.spellState.working then
+    assert(type(action) == "function", "Parameter 'action' must be a function")
+
+    if e.effectInstance.state == tes3.spellState.working then
         e:trigger(); return
     elseif e.effectInstance.state == tes3.spellState.beginning then
-        e:trigger();e:trigger()
+        e:trigger(); e:trigger()
         action(e)
     elseif e.effectInstance.state == tes3.spellState.ending then
         e.effectInstance.state = tes3.spellState.retired
@@ -119,12 +125,13 @@ end
 --- Attempt to emulate vanilla effect timer.
 ---@param e tes3magicEffectTickEventData Used to pass eventData to timer for calculations
 ---@param callback function The function the timer will run
----Example:
+---Usage:
 ---
 ---     bs.effectTimer(e, function ()
 ---         target.mobile:applyDamage { damage = 1, playerAttack = true }
 ---     end)
 function functions.effectTimer(e, callback)
+    assert(type(callback) == "function", "Parameter 'callback' must be a function")
     local effect = #e.sourceInstance.sourceEffects > 0 and e.sourceInstance.sourceEffects[1] ---@type tes3effect
     local duration = effect and math.max(1, effect.duration) or 1
     local mag = e.effectInstance.effectiveMagnitude
@@ -135,7 +142,7 @@ function functions.effectTimer(e, callback)
         callback = function()
             iter = iter + 1
             log:debug("effectTimer: %s", iter)
-            callback() --(table.unpack(args))
+            callback()
         end,
         iterations = duration * mag,
     })
@@ -164,13 +171,14 @@ end
 --
 ---*`---Parameters---`*
 --
----     `damage` - The Damage applied each tick
----     `applyArmor` - If armor mitigates
----     `resist` - The attribute that resists this
----     `applyDifficulty` - If the difficulty modifier is used
----     `playerAttack` - If the attack came from the player
----     `doNotChangeHealth` - If it shouldnt actually damage but still do armor effects
+--- - `damage` - The Damage applied each tick
+--- - `applyArmor` - If armor mitigates
+--- - `resist` - The attribute that resists this
+--- - `applyDifficulty` - If the difficulty modifier is used
+--- - `playerAttack` - If the attack came from the player
+--- - `doNotChangeHealth` - If it shouldnt actually damage but still do armor effects
 function functions.dmgTick(e, params) 
+    assert(type(params) == "table", "Parameter 'params' must be a table")
     if e.effectInstance.state == tes3.spellState.working then e:trigger() return end
     local ref = e.effectInstance.target
     local refHandle = tes3.makeSafeObjectHandle(ref) --Make safe handle
@@ -223,10 +231,11 @@ end
 ---     local effect = functions.getEffect(e, tes3.effect.light)
 ---     local effect = functions.getEffect(e, 41) --Same as above but with number
 --
----`Mainly used for spells you create`
+--- - `Mainly used for spells you create`
 --
----Vanilla ID's `↓`
+-- - `Vanilla ID's | ↓`
 function functions.getEffect(e, effectId)
+    assert(type(effectId) == "number", "Parameter 'effectId' must be a number")
     for i = 1, 8 do
         local effect = e.sourceInstance.sourceEffects[i]
         if effect ~= nil and effect.id == effectId then
