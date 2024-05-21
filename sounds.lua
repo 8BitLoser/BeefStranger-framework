@@ -640,9 +640,9 @@ function sounds.addSound(id, filename)
         volume = 1,
     }
     if sound ~= nil then
-        print(string.format("bsSounds: %s registered", sound))
+        print(string.format("[bsSounds] : %s registered", sound))
     else
-        print(string.format("bsSounds: %s FAILED TO REGISTER", sound))
+        print(string.format("[bsSounds] : %s FAILED TO REGISTER", sound))
     end
 end
 

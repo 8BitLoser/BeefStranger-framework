@@ -66,12 +66,19 @@ function functions.getLog(name)
 end
 ------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
+---`logC`
+----------------------------------------------------------------------------------------------------
+---Logs to console only, wont log the mwse.log
+function functions.logC(...)
+    tes3ui.log("[logC]: ".. ...)
+end
+----------------------------------------------------------------------------------------------------
 ---`timer`
 ----------------------------------------------------------------------------------------------------
 ---@class timer
 ---@field dur number How long each iteration lasts
 ---@field iter number? Number of times it'll repeat
----@field cb function The function ran when duration is expired
+---@field cb function|string The function ran when duration is expired
 ---@param params timer
 ---@return mwseTimer timerId
 --- - `dur` - How long each iteration lasts
@@ -83,12 +90,21 @@ end
 ---     functions.timer{dur = 1, iter = 3, cb = function()}
 function functions.timer(params)
     assert(type(params.dur) == "number", "Parameter 'dur' must be a number")    --ChatGPT test says this is good practice so im testing it
-    assert(type(params.cb) == "function", "Parameter 'cb' must be a function")  --ChatGPT test says this is good practice so im testing it
+    assert(type(params.cb) == "function" or type(params.cb) == "string", "Parameter 'cb' must be a function or a string representing a method call")
+
+    local callback
+    if type(params.cb) == "function" then
+        callback = params.cb
+    elseif type(params.cb) == "string" then
+        callback = function() loadstring(params.cb)() end -- not really working
+    else
+        error("Parameter 'cb' must be a function or a string representing a method call")
+    end
 
     local timerId = timer.start{
             duration = params.dur,
             iterations = params.iter or 1,
-            callback = params.cb,
+            callback = callback,
     }
     return timerId
 end
@@ -296,6 +312,7 @@ end
 ---`rayCast`
 ----------------------------------------------------------------------------------------------------
 ---@param maxDistance number RayCast from players eye, returns a reference
+---@param toLog boolean?
 ---@return tes3reference result
 ---Usage:
 --
@@ -306,13 +323,19 @@ end
 ---`Ignores player`
 --
 ---`maxDistance` is in game units, if you want it in ft like spell radius is divide by 22.1
-function functions.rayCast(maxDistance)
+function functions.rayCast(maxDistance, toLog)
     local result = tes3.rayTest({
         position = tes3.getPlayerEyePosition(),
         direction = tes3.getPlayerEyeVector(),
         ignore = {tes3.player},
         maxDistance = maxDistance,
     })
+
+    if toLog and result then
+        local ref = result.reference
+        log:debug("RayCast: %s - %s : %d", ref.object.name, functions.objectTypeNames[ref.object.objectType], result.distance)
+    end
+
     -- if result and result.reference then --if result is reference return it
     --     return result.reference
     -- else
@@ -435,10 +458,18 @@ function functions.lerp(base, max, progressCap, data, isPositive)
 end
 ------------------------------------------------------------------------------------------------------------------------------
 
+--|==============================================================================================|
+--|===================================|Small Helper Functions|===================================|
+--|==============================================================================================|
 
----------------------------------Small Helper Functions---------------------------------------------
-
-
+----------------------------------------------------------------------------------------------------
+---`string.format`
+----------------------------------------------------------------------------------------------------
+---@param string string
+---@param ... (any)
+function functions.sf(string, ...)
+    return string.format(string, ...)
+end
 ----------------------------------------------------------------------------------------------------
 ---`state`
 ----------------------------------------------------------------------------------------------------
@@ -519,15 +550,21 @@ end
 ---@param key string The Key to trigger it ex: "p" 
 ---@param func function The function you want to run on key press
 function functions.keyUp(key, func)
-    local function onLoad() --only register event when game is loaded
-        local function keyAction() --needed for menuMode check
-            if not tes3.menuMode() then
-                func() --This is where the passed along function runs
-            end
+    local function keyAction() --needed for menuMode check
+        if not tes3.menuMode() then
+            func()             --This is where the passed along function runs
         end
-        event.register("keyUp", keyAction, { filter = tes3.scanCode[key] })
     end
-    event.register("loaded", onLoad) --Wait until game is loaded to register keyUp
+
+    local function onLoad()     --only register event when game is loaded
+        event.unregister("keyUp", keyAction, { filter = tes3.scanCode[key] }) -- Unregister the event first
+        if not event.isRegistered("keyUp", keyAction, { filter = tes3.scanCode[key] }) then
+            event.register("keyUp", keyAction, { filter = tes3.scanCode[key] })
+        end
+    end
+
+    event.unregister("loaded", onLoad)
+    event.register("loaded", onLoad)
 end
 ----------------------------------------------------------------------------------------------------
 ---`glowFX`
@@ -546,7 +583,7 @@ end
 ----------------------------------------------------------------------------------------------------
 ---`msg`
 ----------------------------------------------------------------------------------------------------
----Just a shorthand for messageBox
+---Just a shorthand for messageBox, `local bs = require("BeefStranger.functions")`
 ---@param ... any|tes3.messageBox.messageOrParams
 --- - Usage: Same as tes3.messageBox
 ---
@@ -554,6 +591,7 @@ end
 --- - This obviously works better when requiring like this:
 --
 ---         local bs = require("BeefStranger.functions")
+---         bs.msg("Yo dayo")
 function functions.msg(...)
     tes3.messageBox(...)
 end
@@ -671,8 +709,5 @@ functions.stateName = {
 }
 
 ------------------------------------------------------------------------------------------------------------------------------
-
-
-
 
 return functions
