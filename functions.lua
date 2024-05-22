@@ -1,16 +1,32 @@
 local functions = {}
 local logger = require("logging.logger")
 local log = logger.new { name = "bsFunctions", logLevel = "NONE", logToConsole = true, }
--- local spellMaker = require("BeefStranger.spellMaker")
--- local effectMaker = require("BeefStranger.effectMaker")
 
 functions.effect = require("BeefStranger.effectMaker") 
 functions.sound = require("BeefStranger.sounds")
 functions.bsSound = require("BeefStranger.sounds").bsSound
-functions.playSound = require("BeefStranger.playSound")
+-- functions.playSound = require("BeefStranger.playSound")
 functions.spell = require("BeefStranger.spellMaker")
 
 
+
+----------------------------------------------------------------------------------------------------
+---`Require Folder`
+----------------------------------------------------------------------------------------------------
+
+function functions.importDir(modPath)
+    local basePath = "Data Files/mwse/mods/"
+    local filepath = basePath..modPath:gsub("%.", "/") .. "/"
+
+    log:debug("filePath %s", filepath)
+    for file in lfs.dir(filepath) do
+        local fileName = file:match("(.+)%.lua$")
+        if fileName then
+            log:debug(modPath..".".. fileName)
+            dofile(modPath..".".. fileName)
+        end
+    end
+end
 ----------------------------------------------------------------------------------------------------
 ---`Functions Logging`
 ----------------------------------------------------------------------------------------------------
@@ -37,7 +53,7 @@ end
 function functions.createLog(name, level, ...)
     level = level or "DEBUG"
     -- if not level then level = "DEBUG" end
-    local logging = require("logging.logger").new{ name = name, logLevel = level, logToConsole = true, ...}
+    local logging = logger.new{ name = name, logLevel = level, logToConsole = true, ...}
     return logging
 end
 ----------------------------------------------------------------------------------------------------
@@ -90,15 +106,14 @@ end
 ---     functions.timer{dur = 1, iter = 3, cb = function()}
 function functions.timer(params)
     assert(type(params.dur) == "number", "Parameter 'dur' must be a number")    --ChatGPT test says this is good practice so im testing it
-    assert(type(params.cb) == "function" or type(params.cb) == "string", "Parameter 'cb' must be a function or a string representing a method call")
+    assert(type(params.cb) == "function") --[[ or type(params.cb) == "string", "Parameter 'cb' must be a function or a string representing a method call") ]]
 
     local callback
+    --callback = type(params.cb) == "function" and params.cb or "Parameter 'cb' must be valid Lua code")
     if type(params.cb) == "function" then
         callback = params.cb
-    elseif type(params.cb) == "string" then
-        callback = function() loadstring(params.cb)() end -- not really working
     else
-        error("Parameter 'cb' must be a function or a string representing a method call")
+        error("Parameter 'cb' must be a function")
     end
 
     local timerId = timer.start{
@@ -490,11 +505,41 @@ function functions.refreshSpell(ref, spell)
     tes3.addSpell{reference = ref, spell = spell}
 end
 ----------------------------------------------------------------------------------------------------
+---`modCurrent`
+----------------------------------------------------------------------------------------------------
+---@param ref tes3reference|tes3mobilePlayer
+---@param stat string
+---@param amount number
+---@param baseLimit boolean?
+function functions.modCurrent(ref, stat, amount, baseLimit)
+    tes3.modStatistic{
+        reference = ref,
+        name = stat,
+        current = amount,
+        limitToBase = baseLimit
+    }
+end
+----------------------------------------------------------------------------------------------------
+---`setBase`
+----------------------------------------------------------------------------------------------------
+---@param ref tes3reference|tes3mobilePlayer
+---@param stat string
+---@param amount number
+---@param baseAndCurrent boolean?
+function functions.setBase(ref, stat, amount, baseAndCurrent)
+    tes3.setStatistic{
+        reference = ref,
+        name = stat,
+        base = amount,
+        value = baseAndCurrent == true and amount
+    }
+end
+----------------------------------------------------------------------------------------------------
 ---`addSpell`
 ----------------------------------------------------------------------------------------------------
 ---More convienent addSpell when you're just adding spell to a ref
 ---@param ref any Who to add the spell to
----@param spell string Spell Id
+---@param spell string|tes3spell Spell Id
 function functions.addSpell(ref, spell)
     tes3.addSpell{reference = ref, spell = spell}
 end
@@ -569,10 +614,16 @@ end
 ----------------------------------------------------------------------------------------------------
 ---`glowFX`
 ----------------------------------------------------------------------------------------------------
----@param ref tes3reference The reference to apply the Fx to
+---Applys an enchant style vfx to a reference
+---@param ref tes3reference|string The reference to apply the Fx to
 ---@param effectId tes3.effect
-function functions.glowFX(ref, effectId)
-    tes3.createVisualEffect({ lifespan = 1, reference = ref, magicEffectId = effectId, })
+---@param lifespan number?
+---Usage:
+---
+---     functions.glowFX(ref, tes3.effect.charm)
+--- >
+function functions.glowFX(ref, effectId, lifespan)
+    tes3.createVisualEffect({ lifespan = lifespan or 1, reference = ref, magicEffectId = effectId, })
 end
 ----------------------------------------------------------------------------------------------------
 ---`equipMagic`
@@ -594,6 +645,22 @@ end
 ---         bs.msg("Yo dayo")
 function functions.msg(...)
     tes3.messageBox(...)
+end
+----------------------------------------------------------------------------------------------------
+---`playSound`
+----------------------------------------------------------------------------------------------------
+---@param sound string|tes3sound|bsSounds The sound object, or id of the sound to look for.
+---@param volume number? Default: 1.0. A value between 0.0 and 1.0 to scale the volume off of.
+---@param pitch number? Default: 1.0. The pitch-shift multiplier. For 22kHz audio (most typical) it can have the range [0.005, 4.5]; for 44kHz audio it can have the range [0.0025, 2.25].
+---@param reference tes3reference|tes3mobileCreature|tes3mobileNPC|tes3mobilePlayer|string|nil? The reference to attach the sound to. If no reference is provided, the sound will be played directly.
+---Usage:
+---
+---     functions.playSound(bs.sound.bell6)
+---or
+---
+---     functions.playSound("bell6")
+function functions.playSound(sound, volume, pitch, reference)
+    tes3.playSound{ sound = sound, volume = volume, pitch = pitch, reference = reference}
 end
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
