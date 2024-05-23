@@ -1,3 +1,5 @@
+
+---@class bsSounds
 local sounds = {
     alitMOAN = "alitMOAN",
     alitROAR = "alitROAR",

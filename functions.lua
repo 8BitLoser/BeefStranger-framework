@@ -23,7 +23,7 @@ function functions.importDir(modPath)
         local fileName = file:match("(.+)%.lua$")
         if fileName then
             log:debug(modPath..".".. fileName)
-            dofile(modPath..".".. fileName)
+            require(modPath..".".. fileName)
         end
     end
 end
@@ -324,6 +324,36 @@ function functions.shuffleInv(t)
 end
 ------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
+---`mergeTables`
+----------------------------------------------------------------------------------------------------
+function functions.mergeTables(t1, t2)
+    local t = {}
+    for k, v in pairs(t1) do
+        t[k] = v
+    end
+    for k, v in pairs(t2) do
+        t[k] = v
+    end
+    return t
+end
+------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+---`onLoad`
+----------------------------------------------------------------------------------------------------
+---@param func fun()
+---@param priority number
+---Shorthand for:
+---
+---     event.register("loaded", function()
+---     end)
+---
+---     bs.onLoad(function()
+---     end)
+function functions.onLoad(func, priority)
+    event.register("loaded", func, {priority = priority})
+end
+------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 ---`rayCast`
 ----------------------------------------------------------------------------------------------------
 ---@param maxDistance number RayCast from players eye, returns a reference
@@ -546,10 +576,11 @@ end
 ----------------------------------------------------------------------------------------------------
 ---`bulkAddSpells`
 ----------------------------------------------------------------------------------------------------
+---@param spellTable table
 function functions.bulkAddSpells(ref, spellTable)
     for _, spell in pairs(spellTable) do
-        if not tes3.hasSpell{reference = ref, spell = spell.spellId} then
-            tes3.addSpell{reference = ref, spell = spell.spellId}
+        if not tes3.hasSpell{reference = ref, spell = spell.spell.id} then
+            tes3.addSpell{reference = ref, spell = spell.spell.id}
         else
             log:debug("bullkAddSpells - Player already has %s, skipping", spell.spellId)
         end
@@ -593,7 +624,12 @@ end
 ----------------------------------------------------------------------------------------------------
 ---Small helper function to handle keyUp event, includes a check for menuMode, not really faster but i wanted it.
 ---@param key string The Key to trigger it ex: "p" 
----@param func function The function you want to run on key press
+---@param func fun() The function you want to run on key press
+---Usage: *Note is registered in the loaded event*
+---
+---     bs.keyUp("p", function()
+---         bs.msg("P has been pressed")
+---     end)
 function functions.keyUp(key, func)
     local function keyAction() --needed for menuMode check
         if not tes3.menuMode() then

@@ -1,12 +1,13 @@
 local spellMaker = {}
 local logger = require("logging.logger")
 local log = logger.new { name = "spellMaker", logLevel = "DEBUG", logToConsole = true, }
+-- local bs = require("BeefStranger.functions")
 
 function spellMaker.calculateEffectCost(spell)
-    local totalCost = 0 --Initialize totalCost to add too
-    for i=1, spell:getActiveEffectCount() do -- this line straight taken from magickaExpanded framework
-        local effect = spell.effects[i] ---@type tes3effect set effect to for every id.effects[1-2-3-etc] 
-        if (effect ~= nil) then --if effect is valid
+    local totalCost = 0                      --Initialize totalCost to add too
+    for i = 1, spell:getActiveEffectCount() do -- this line straight taken from magickaExpanded framework
+        local effect = spell.effects[i] ---@type tes3effect set effect to for every id.effects[1-2-3-etc]
+        if (effect ~= nil) then              --if effect is valid
             local minMag = effect.min or 0
             local maxMag = effect.max or 1
             local duration = effect.duration or 0
@@ -17,14 +18,26 @@ function spellMaker.calculateEffectCost(spell)
             if effect.rangeType == tes3.effectRange.target then
                 ranged = 1.5 -- Increase cost by 50% for target range effects
             end
-            
+
             -- Calculate the cost of the effect. Formula from uesp is wrong. the end result has to be divided by 2 to match built in spells
-            local cost = (((minMag + maxMag) * (duration + 1)+ area) * (baseEffectCost / 40) * ranged) / 2
+            local cost = (((minMag + maxMag) * (duration + 1) + area) * (baseEffectCost / 40) * ranged) / 2
             totalCost = totalCost + cost
             -- log:debug("%s - min-%s max-%s dur-%s area-%s baseCost-%s range-%s totalCost-%s",effect ,minMag,maxMag,duration,area,baseEffectCost,ranged, totalCost)
         end
     end
     return totalCost
+end
+
+
+local function mergeTables(t1, t2)
+    local t = {}
+    for k, v in pairs(t1) do
+        t[k] = v
+    end
+    for k, v in pairs(t2) do
+        t[k] = v
+    end
+    return t
 end
 
 --- @class SpellParamsCreate
@@ -54,7 +67,12 @@ end
 --- @field min2 integer? Optional up to min8. Defaults to first effects min. 
 --- @field duration2? integer Optional up to duration8. Defaults to first effects duration.
 --- @param params SpellParamsCreate The configuration table for the new spell.
-function spellMaker.create(params)
+--- @param addOnParam? table Optional. Useful if you are using a table to manage spells but want to add something to the spell after
+function spellMaker.create(params, addOnParam)
+    if addOnParam then
+        params = mergeTables(params, addOnParam)
+    end
+
     local spell = tes3.getObject(params.id) or tes3.createObject({ ---@type tes3spell
         objectType = tes3.objectType.spell, --Define objectType you're making
         id = params.id, 
