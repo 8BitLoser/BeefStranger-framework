@@ -13,7 +13,6 @@ functions.spell = require("BeefStranger.spellMaker")
 ----------------------------------------------------------------------------------------------------
 ---`Require Folder`
 ----------------------------------------------------------------------------------------------------
-
 function functions.importDir(modPath)
     local basePath = "Data Files/mwse/mods/"
     local filepath = basePath..modPath:gsub("%.", "/") .. "/"
@@ -27,6 +26,7 @@ function functions.importDir(modPath)
         end
     end
 end
+
 ----------------------------------------------------------------------------------------------------
 ---`Functions Logging`
 ----------------------------------------------------------------------------------------------------
@@ -59,20 +59,32 @@ end
 ----------------------------------------------------------------------------------------------------
 ---`getLog`
 ----------------------------------------------------------------------------------------------------
+--- Logger functions type
+--- @class Logger
+--- @field trace fun(...: any)
+--- @field debug fun(...: any)
+--- @field info fun(...: any)
+--- @field warn fun(...: any)
+--- @field error fun(...: any)
 ---@param name string Name of the logger to load
----@return table; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
+---@return Logger|any; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
 ---Usage:
---
+--- ```lua
 ---     local log = getLog("MyLogName")
 ---     local trace, debug, info = log.trace, log.debug, log.info
 ---     
 ---     log.trace("This is a trace message")
 ---     trace("This is a trace message")
 ---     debug("This is a debug message")
----     info("This is a info message")
+---     info("This is an info message")
+---     log.warn("This is a warning message")
+---     log.error("This is an error message")
+--- ```
 function functions.getLog(name)
     local logging = require("logging.logger").getLogger(name) or ""
     return{
+        --- Logs a trace message
+        --- @param ... any: The message to log
         trace = function (...) logging:trace(...) end,
         debug = function (...) logging:debug(...) end,
         info = function (...) logging:info(...) end,
@@ -81,6 +93,20 @@ function functions.getLog(name)
     }
 end
 ------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+---`inspect`
+----------------------------------------------------------------------------------------------------
+---@param table table The table you want to inspect
+---Usage:
+--- ```lua
+---     bs.inspect(myTable)
+---```
+---`Returns a debug message of the table`
+function functions.inspect(table)
+    local inspect = require("inspect").inspect
+
+    log:debug("[functions] - %s", inspect(table))
+end
 ----------------------------------------------------------------------------------------------------
 ---`logC`
 ----------------------------------------------------------------------------------------------------
@@ -698,6 +724,20 @@ end
 function functions.playSound(sound, volume, pitch, reference)
     tes3.playSound{ sound = sound, volume = volume, pitch = pitch, reference = reference}
 end
+----------------------------------------------------------------------------------------------------
+---`createConfig` --Not sure i can make it worth using
+----------------------------------------------------------------------------------------------------
+-- function functions.createConfig(configPath, default)
+--     local config = mwse.loadConfig(configPath, default)
+    
+--     event.register(tes3.event.modConfigReady, function ()
+--         local template = mwse.mcm.createTemplate({ name = configPath })
+--         template:saveOnClose(configPath, config)
+--     end)
+
+
+--     return config
+-- end
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 
