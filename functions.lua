@@ -7,6 +7,7 @@ functions.sound = require("BeefStranger.sounds")
 functions.bsSound = require("BeefStranger.sounds").bsSound
 -- functions.playSound = require("BeefStranger.playSound")
 functions.spell = require("BeefStranger.spellMaker")
+functions.config = require("BeefStranger.config")
 
 
 
@@ -41,9 +42,18 @@ end
 ----------------------------------------------------------------------------------------------------
 ---`createLog`
 ----------------------------------------------------------------------------------------------------
+--- Logger functions type
+--- @class Logger
+--- @field trace fun(...: any)
+--- @field debug fun(...: any)
+--- @field info fun(...: any)
+--- @field warn fun(...: any)
+--- @field error fun(...: any)
+--- @field log mwseLogger
 ---@param name string Name of the logger
 ---@param level mwseLoggerLogLevel? logLevel : Defaults to "DEBUG"
 ---@param ...? mwseLoggerInputData
+---@return mwseLogger logging
 ---Usage:
 --
 ---     local log = functions.createLog("MyLogName", "TRACE")
@@ -59,13 +69,6 @@ end
 ----------------------------------------------------------------------------------------------------
 ---`getLog`
 ----------------------------------------------------------------------------------------------------
---- Logger functions type
---- @class Logger
---- @field trace fun(...: any)
---- @field debug fun(...: any)
---- @field info fun(...: any)
---- @field warn fun(...: any)
---- @field error fun(...: any)
 ---@param name string Name of the logger to load
 ---@return Logger|any; A table with logging functions (`log`, `debug`, `info`, `warn`, `trace`).
 ---Usage:
@@ -81,7 +84,7 @@ end
 ---     log.error("This is an error message")
 --- ```
 function functions.getLog(name)
-    local logging = require("logging.logger").getLogger(name) or ""
+    local logging = require("logging.logger").getLogger(name) or functions.createLog(name)
     return{
         --- Logs a trace message
         --- @param ... any: The message to log
@@ -90,6 +93,9 @@ function functions.getLog(name)
         info = function (...) logging:info(...) end,
         warn = function (...) logging:warn(...) end,
         error = function (...) logging:error(...) end,
+        -- setLogLevel = function(...) logging:setLogLevel(...) end,
+        logToConsole = function(...) logging.logToConsole(...) end,
+        log = logging
     }
 end
 ------------------------------------------------------------------------------------------------------------------------------
