@@ -50,4 +50,9 @@ function config.yesNo(page, label, id, configTable, options)
     page:createYesNoButton(optionTable)
 end
 
+function config.template(configPath)
+    local mcmTemplate = mwse.mcm.createTemplate({ name = configPath })
+    return mcmTemplate
+end
+
 return config
