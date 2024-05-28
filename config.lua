@@ -46,7 +46,6 @@ function config.yesNo(page, label, id, configTable, options)
             optionTable[key] = value
         end
     end
-
     page:createYesNoButton(optionTable)
 end
 
