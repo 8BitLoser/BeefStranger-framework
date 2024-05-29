@@ -19,13 +19,23 @@ function functions.importDir(modPath)
     local filepath = basePath..modPath:gsub("%.", "/") .. "/"
 
     log:debug("filePath %s", filepath)
-    for file in lfs.dir(filepath) do
-        local fileName = file:match("(.+)%.lua$")
-        if fileName then
-            log:debug(modPath..".".. fileName)
-            require(modPath..".".. fileName)
+
+    local success, err = pcall(function()
+        log:debug("filePath %s", filepath)
+        for file in lfs.dir(filepath) do
+            local fileName = file:match("(.+)%.lua$")
+            if fileName then
+                log:debug(modPath .. "." .. fileName)
+                package.loaded[modPath .. "." .. fileName] = nil  -- Clear the cached module
+                require(modPath .. "." .. fileName)
+            end
         end
+    end)
+
+    if not success then
+        mwse.log("[bsF | importDir]: Error - %s", err)
     end
+
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -37,6 +47,8 @@ function functions.debug(toggle)
     if toggle then
         log:setLogLevel("DEBUG")
         log:debug("Debug Enabled")
+    else
+        log:setLogLevel("ERROR")
     end
 end
 ----------------------------------------------------------------------------------------------------
@@ -61,9 +73,11 @@ end
 --
 ---`Log Levels:`
 function functions.createLog(name, level, ...)
+    local cLogger = require("logging.logger")
     level = level or "NONE"
     -- if not level then level = "DEBUG" end
-    local logging = logger.new{ name = name, logLevel = level, logToConsole = true, ...}
+    local logging = cLogger.new{ name = name, logLevel = level, logToConsole = false, ...}
+    mwse.log("[bsF | createLog]: log name %s", logging.name)
     return logging
 end
 ----------------------------------------------------------------------------------------------------
@@ -84,7 +98,18 @@ end
 ---     log.error("This is an error message")
 --- ```
 function functions.getLog(name)
-    local logging = require("logging.logger").getLogger(name) or functions.createLog(name)
+    local gLogger = require("logging.logger")
+
+    package.loaded["logging.logger"] = nil -- Clear the cached module
+
+    local logging = gLogger.getLogger(name) or functions.createLog(name)
+    if not logging then
+        mwse.log("[bsF | getLog]: Logging not found")
+        return
+    else
+        mwse.log("[bsF | getLog]: %s Found", logging.name)
+    end
+
     return{
         --- Logs a trace message
         --- @param ... any: The message to log
